@@ -1,16 +1,14 @@
 import streamlit as st
 import pandas as pd
 import tempfile
-from src import ps_e  # Ensure this module has get_PSE_report(sim_path)
+from src import ps_e 
 
-# Set wide layout
 st.set_page_config(
     page_title="MEP Calculator",
     page_icon="🚰",
     layout='wide'
 )
 
-# Rainbow-colored title
 rainbow_title = """
 <h1 style='text-align: center; background: linear-gradient(to right, red, orange, yellow, green, blue, indigo, violet);
             -webkit-background-clip: text; color: transparent; font-size: 40px;'>
@@ -19,7 +17,6 @@ rainbow_title = """
 """
 st.markdown(rainbow_title, unsafe_allow_html=True)
 
-# About section
 st.markdown("""
 <div style='text-align: left; font-size:18px; background-color: #f0f2f6; padding: 15px; border-radius: 8px;'>
 <b>About the MEP Calculator</b><br><br>
@@ -42,11 +39,9 @@ if st.button("Process Files"):
     elif not csv_file:
         st.warning("Please upload a CSV file.")
     else:
-        # try:
-        # Read uploaded CSV
+
         df = pd.read_csv(csv_file)
 
-        # Map End Uses from CSV to SIM headers
         end_use_map = {
             "Interior lighting": "LIGHTS",
             "Exterior lighting": "EXT USAGE",
@@ -58,8 +53,7 @@ if st.button("Process Files"):
             "Service water heating": "DOMEST HOT WTR",
             "Receptacle equipment": ""
         }
-        
-        # Process SIM files and collect pse_dfs
+
         pse_dfs = []
         rotation_labels = [
             'Baseline 0° rotation',
@@ -74,8 +68,7 @@ if st.button("Process Files"):
                 temp_file_path = temp_file.name
              
             pse_df = ps_e.get_PSE_report(temp_file_path)
-    
-            # Extract the values
+
             pse_df_int_light_kwh = pse_df['LIGHTS'][0]
             pse_df_int_light_kw = pse_df['LIGHTS'][1]
             pse_df_ext_light_kwh = pse_df['EXT USAGE'][0]
@@ -95,7 +88,6 @@ if st.button("Process Files"):
             pse_df_equip_kwh = pse_df['MISC_EQUIP'][0]
             pse_df_equip_kw = pse_df['MISC_EQUIP'][1]
 
-            # Assign to correct rotation column
             col = rotation_labels[i]
             df[col][0] = float(pse_df_int_light_kwh)
             df[col][1] = float(pse_df_int_light_kw)
@@ -116,8 +108,6 @@ if st.button("Process Files"):
             df[col][18] = float(pse_df_equip_kwh)
             df[col][19] = float(pse_df_equip_kw)
 
-        # df[rotation_labels] = df[rotation_labels].apply(pd.to_numeric, errors='coerce')
-        # df['Baseline Design Total (Average of 4 rotations)'] = df[rotation_labels].mean(axis=1, skipna=True)
         cols = [
             'Baseline 0° rotation',
             'Baseline 90° rotation',
@@ -146,7 +136,6 @@ if st.button("Process Files"):
         df['Baseline 270° rotation'][51] = 0
         df['Baseline Design Total (Average of 4 rotations)'] = df[cols].sum(axis=1) / 4
 
-        # Show updated DataFrame and download option
         st.success("Files processed and CSV updated successfully!")
         st.dataframe(df)
 
