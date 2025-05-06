@@ -120,9 +120,13 @@ def main():
 
     csv_file = r'tables/MEP Calculator.csv'
     df = pd.read_csv(csv_file)
-    if st.button("Process Files"):
-        ps_e.get_END_USE_Proposed(df, uploaded_0_degree, uploaded_90_degree, uploaded_180_degree, uploaded_270_degree, uploaded_proposed_file)
-                
+    if uploaded_proposed_file is not None:
+        if st.button("Process Files"):
+            ps_e.get_END_USE_Proposed(df, uploaded_0_degree, uploaded_90_degree, uploaded_180_degree, uploaded_270_degree, uploaded_proposed_file)
+
+    else:
+        st.info("Please Upload SIM Flies to Proceed!")
+
 if __name__ == "__main__":
     main()
 
