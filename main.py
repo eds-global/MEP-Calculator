@@ -8,7 +8,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
 import tempfile
-from src import ps_e, bepu
+from src import ps_e, bepu, lv_d, lighting
 
 st.set_page_config(
     page_title="MEP Calculator",
@@ -97,17 +97,16 @@ def main():
     """, unsafe_allow_html=True)
 
     st.markdown("""
-    <h4 style="color:red;">♻️ MEP Calculator</h4>
-    The MEP Calculator is a tool to help working on energy-efficient building projects, such as LEED-certified projects, update and analyze MEP performance values.
-    Upload and process four SIM files representing different rotations.
+    <div style="border: 2px solid #ddd; padding: 15px; border-radius: 10px; background-color: #f9f9f9;">
+        <h4 style="color: red;">♻️ MEP Calculator</h4>
+        <p>The <b>MEP Calculator</b> is a tool designed to support energy-efficient building projects, including LEED-certified initiatives. It helps update and analyze MEP performance values using simulation files.</p>
+        <p><b>Purpose:</b> Evaluate performance outputs such as <b>Lighting</b>, <b>Shading & Fenestration</b>, and <b>Energy End-Use</b> metrics.</p>
+        <p><b>Note:</b> For <span style="color:blue;"><b>Performance Outputs</b></span>, upload exactly <b>4 Baseline SIM files</b> (rotations: 0°, 90°, 180°, 270°) and <b>1 Proposed SIM file</b>.<br>
+        Other analysis options (e.g., Lighting, Shading & Fenestration) may require fewer files.</p>
+    </div>
     """, unsafe_allow_html=True)
-
-    st.markdown("""
-    <b>Purpose:</b> a tool to help working on energy-efficient building projects, such as LEED-certified projects, update and analyze MEP performance values.<br>
-    <b>Note:</b> Upload exactly 4 Baseline and 1 Proposed SIM files.
-    """, unsafe_allow_html=True)
-
-    col1, col2, col3, col4 = st.columns(4)
+    
+    col1, col2, col3, col4, col5 = st.columns(5)
     with col1:
         uploaded_0_degree = st.file_uploader("Upload 0° SIM File", type=["sim"], accept_multiple_files=False)
     with col2:
@@ -116,16 +115,38 @@ def main():
         uploaded_180_degree = st.file_uploader("Upload 180° SIM File", type=["sim"], accept_multiple_files=False)
     with col4:
         uploaded_270_degree = st.file_uploader("Upload 270° SIM File", type=["sim"], accept_multiple_files=False)
-    uploaded_proposed_file = st.file_uploader("Upload a Proposed SIM file", type=["sim"], accept_multiple_files=False)
+    with col5:
+        uploaded_proposed_file = st.file_uploader("Upload a Proposed SIM file", type=["sim"], accept_multiple_files=False)
 
     csv_file = r'tables/MEP Calculator.csv'
     df = pd.read_csv(csv_file)
-    if uploaded_proposed_file is not None:
-        if st.button("Process Files"):
-            ps_e.get_END_USE_Proposed(df, uploaded_0_degree, uploaded_90_degree, uploaded_180_degree, uploaded_270_degree, uploaded_proposed_file)
 
+    st.markdown('<hr style="border:1px solid black">', unsafe_allow_html=True)
+    st.markdown("""<h6 style="color:red;">🔴 Select Calculator Type</h6>""", unsafe_allow_html=True)
+    analysis_option = st.radio("Choose the type of analysis to perform:", 
+                            ("Performance Outputs", "Shading and Fenestration", "Lighting"))
+
+    if uploaded_proposed_file is not None and uploaded_0_degree is not None:
+        if analysis_option == "Performance Outputs":
+            if uploaded_90_degree is not None and uploaded_180_degree is not None and uploaded_270_degree is not None:
+                if st.button("Process Performance Outputs"):
+                    ps_e.get_END_USE_Proposed(df, uploaded_0_degree, uploaded_90_degree, uploaded_180_degree, uploaded_270_degree, uploaded_proposed_file)
+            else:
+                st.info("Please upload all 4 rotation SIM files for Performance Outputs.")
+
+        elif analysis_option == "Shading and Fenestration":
+            if st.button("Process Shading and Fenestration"):
+                lv_d.generateFenestration(uploaded_0_degree, uploaded_proposed_file)
+
+        elif analysis_option == "Lighting":
+            if uploaded_0_degree is not None:
+                uploaded_INP_file = st.file_uploader("Upload a INP file", type=["inp"], accept_multiple_files=False)
+                if st.button("Process Lighting"):
+                    lighting.generateLighting(uploaded_0_degree, uploaded_proposed_file, uploaded_INP_file)
+            else:
+                st.info("Please upload the Baseline SIM file for Lighting analysis.")
     else:
-        st.info("Please Upload SIM Flies to Proceed!")
+        st.info("Please upload at least the 0° and Proposed SIM files to proceed.")
 
 if __name__ == "__main__":
     main()
